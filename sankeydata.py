@@ -8,7 +8,7 @@ def calc_data(dice_shape, dice_start, dice_stop, n):
     # response = urllib.request.urlopen(url)
     # data = json.loads(response.read()) # replace with your own data source
     outcome = dr.dice(sides = dice_shape,values= list(range(dice_start, dice_stop + 1)), max_n= n)
-    rolls = outcome.melted
+    rolls = outcome.melted.loc[outcome.melted['n'] == n,:]
 
     link_1_group = rolls.groupby(['n','die'])['value'].count().reset_index()
     link_2_group = rolls.groupby(['die','result'])['n'].count().reset_index()
