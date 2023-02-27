@@ -2,6 +2,8 @@ from dash import Dash, dcc, html, Input, Output
 import plotly.graph_objects as go
 import plotly.express as px
 import json, urllib
+import pandas as pd
+import numpy as np
 import flask
 from sankeydata import calc_data
 
@@ -41,23 +43,29 @@ def display_sankey(dice_start,dice_stop,n_dice):
 
     bar_fig = px.bar(bar_data, x = 'result', y = 'probability')
 
-
     links_dict = feed['links']
 
+    df = pd.DataFrame(links_dict)
+    df['frac_label'] = np.nan
+    targets = df['target'].unique()
+    for target in targets:
+      df.loc[df['target'] == target, 'frac_label'] = df.loc[df['target'] == target, 'value'].sum()/df['value'].sum()
+    node_values = (df['frac_label'].drop_duplicates()*100).round(2).to_list()
     fig = go.Figure(data=[go.Sankey(
     node = dict(
       pad = 15,
       thickness = 20,
       line = dict(color = "black", width = 0.5),
       label = feed['labels'],
-      color = "blue"
-      # hovertemplate = f"""v{links_dict["value"]}"""
+      color = "blue",
+      customdata = node_values,
+      hovertemplate = "Probability: %{customdata}%"
     ),
     link = dict(
       source = links_dict["source"],
       target = links_dict["target"],
-      value = links_dict["value"]#,
-      # hovertemplate = f'the value is {links_dict["value"]}'
+      value = links_dict["value"],#,
+      hovertemplate = 'the value is %{links_dict["value"]}'
   ))])
     fig.update_layout(title_text="dice outcomes", font_size=10)
     fig.update_layout(height = 750)
