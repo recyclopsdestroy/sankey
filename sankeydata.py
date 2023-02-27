@@ -33,7 +33,7 @@ def calc_data(dice_shape, dice_start, dice_stop, n):
     links['target'] = links['target'].map(mapping_dict)
     links_dict = links.to_dict(orient='list')
 
-    data = {'links' : links_dict, 'labels' : unique_source_target}
+    data = {'links' : links_dict, 'labels' : unique_source_target, 'data': outcome}
 
     return data
 

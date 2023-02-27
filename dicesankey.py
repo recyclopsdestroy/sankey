@@ -1,13 +1,20 @@
 from dash import Dash, dcc, html, Input, Output
 import plotly.graph_objects as go
+import plotly.express as px
 import json, urllib
+import flask
 from sankeydata import calc_data
 
-app = Dash(__name__)
+
+f_app = flask.Flask(__name__)
+app = Dash(__name__, server=f_app)
+# app = Dash(__name__)
 
 app.layout = html.Div([
-    html.H4('Dice Outcomes'),
+    html.H4('Dice Outcome Flow'),
     dcc.Graph(id="graph"),
+    html.H4('Dice Distribution'),
+    dcc.Graph(id = "bar"),
     html.P("dice_start"),
     dcc.Slider(id='dice_start', min=0, max=6, 
                value=1, step=1),
@@ -21,12 +28,20 @@ app.layout = html.Div([
 
 @app.callback(
     Output("graph", "figure"), 
+    Output("bar", "figure"),
     Input("dice_start", "value"),
     Input("dice_stop", "value"),
     Input("n_dice", "value"))
 def display_sankey(dice_start,dice_stop,n_dice):
     
     feed = calc_data(6, dice_start,dice_stop,n_dice)
+
+    dice_obj = feed['data']
+    bar_data = dice_obj.summary[n_dice]
+
+    bar_fig = px.bar(bar_data, x = 'result', y = 'probability')
+
+
     links_dict = feed['links']
 
     fig = go.Figure(data=[go.Sankey(
@@ -36,15 +51,17 @@ def display_sankey(dice_start,dice_stop,n_dice):
       line = dict(color = "black", width = 0.5),
       label = feed['labels'],
       color = "blue"
+      # hovertemplate = f"""v{links_dict["value"]}"""
     ),
     link = dict(
       source = links_dict["source"],
       target = links_dict["target"],
-      value = links_dict["value"]
+      value = links_dict["value"]#,
+      # hovertemplate = f'the value is {links_dict["value"]}'
   ))])
     fig.update_layout(title_text="dice outcomes", font_size=10)
     fig.update_layout(height = 750)
-    return fig
+    return fig, bar_fig
     # fig.show()
     
     
@@ -66,5 +83,5 @@ def display_sankey(dice_start,dice_stop,n_dice):
     # fig = go.Figure(go.Sankey(link=link, node=node))
     # fig.update_layout(font_size=10)
     # return fig
-
-app.run_server(debug=True)
+if __name__ == "__main__":
+  app.run_server(debug=True)
